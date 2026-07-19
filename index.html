@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoDial - 宽带自动拨号工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        .header { text-align: center; padding: 60px 20px; color: white; }
+        .header img { width: 120px; height: 120px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .header h1 { font-size: 48px; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .header p { font-size: 18px; opacity: 0.9; }
+        
+        /* Cards */
+        .card { background: white; border-radius: 16px; padding: 30px; margin: 20px 0; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .card h2 { color: #667eea; margin-bottom: 20px; font-size: 24px; }
+        
+        /* Features Grid */
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .feature { padding: 20px; background: #f8f9fa; border-radius: 12px; }
+        .feature h3 { color: #764ba2; margin-bottom: 10px; }
+        .feature p { color: #666; font-size: 14px; line-height: 1.6; }
+        
+        /* Install Section */
+        .install-section { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; }
+        .install-section h2 { color: #00d4ff; }
+        
+        .install-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .install-method { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; }
+        .install-method h3 { color: #00d4ff; margin-bottom: 15px; }
+        
+        .code-block { background: #0d1117; border-radius: 8px; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; overflow-x: auto; margin: 10px 0; position: relative; }
+        .code-block .copy-btn { position: absolute; top: 10px; right: 10px; background: #667eea; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .code-block .copy-btn:hover { background: #5a6fd6; }
+        
+        .download-btn { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: bold; margin: 10px 5px; transition: transform 0.3s, box-shadow 0.3s; }
+        .download-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+        .download-btn.secondary { background: rgba(255,255,255,0.2); }
+        
+        /* Version */
+        .version-badge { display: inline-block; background: #00d4ff; color: #1a1a2e; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
+        
+        /* Changelog */
+        .changelog { max-height: 400px; overflow-y: auto; }
+        .changelog-item { border-left: 3px solid #667eea; padding: 15px; margin: 10px 0; background: #f8f9fa; border-radius: 0 8px 8px 0; }
+        .changelog-item h4 { color: #667eea; margin-bottom: 8px; }
+        .changelog-item ul { margin-left: 20px; color: #666; }
+        .changelog-item li { margin: 5px 0; font-size: 14px; }
+        
+        /* Footer */
+        .footer { text-align: center; padding: 40px; color: white; opacity: 0.8; }
+        .footer a { color: #00d4ff; text-decoration: none; }
+        
+        /* Terminal */
+        .terminal { background: #0d1117; border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .terminal-header { display: flex; align-items: center; margin-bottom: 15px; }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+        .terminal-title { color: #8b949e; font-size: 14px; }
+        .terminal-content { color: #00ff00; font-family: 'Consolas', monospace; font-size: 14px; line-height: 1.8; }
+        .terminal-content .prompt { color: #667eea; }
+        .terminal-content .cmd { color: #00ff00; }
+        .terminal-content .comment { color: #8b949e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <img src="AutoDial.ico" alt="AutoDial Logo">
+            <h1>AutoDial</h1>
+            <p>现代化宽带自动拨号工具 | WPF界面 | 多账号管理 | 开机自启</p>
+            <span class="version-badge">v2.5</span>
+        </div>
+
+        <!-- Features -->
+        <div class="card">
+            <h2>功能特性</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>多账号管理</h3>
+                    <p>支持添加、删除、切换多个宽带账号，一键拨号连接。</p>
+                </div>
+                <div class="feature">
+                    <h3>创建系统连接</h3>
+                    <p>直接在Windows中创建PPPoE拨号连接，无需手动设置。</p>
+                </div>
+                <div class="feature">
+                    <h3>开机自动拨号</h3>
+                    <p>开机登录后自动执行拨号，支持静默模式。</p>
+                </div>
+                <div class="feature">
+                    <h3>断线自动重连</h3>
+                    <p>检测到断线后自动重新拨号连接。</p>
+                </div>
+                <div class="feature">
+                    <h3>系统托盘</h3>
+                    <p>最小化到系统托盘，拨号成功/失败自动通知。</p>
+                </div>
+                <div class="feature">
+                    <h3>密码管理</h3>
+                    <p>密码显示/隐藏切换，导入/导出配置。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download -->
+        <div class="card">
+            <h2>下载</h2>
+            <div style="text-align: center; padding: 20px;">
+                <a href="https://github.com/khssdsg-maker/AutoDial/releases/download/v2.5/AutoDial.zip" class="download-btn">
+                    下载 AutoDial v2.5
+                </a>
+                <br>
+                <a href="https://github.com/khssdsg-maker/AutoDial" class="download-btn secondary">
+                    查看源代码
+                </a>
+            </div>
+        </div>
+
+        <!-- Install Methods -->
+        <div class="card install-section">
+            <h2>安装方法</h2>
+            
+            <div class="install-methods">
+                <!-- Method 1: PowerShell -->
+                <div class="install-method">
+                    <h3>方法一：PowerShell一键安装（推荐）</h3>
+                    <p style="margin-bottom: 15px; opacity: 0.8;">以管理员身份运行PowerShell，执行以下命令：</p>
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot red"></div>
+                            <div class="terminal-dot yellow"></div>
+                            <div class="terminal-dot green"></div>
+                            <span class="terminal-title">PowerShell</span>
+                        </div>
+                        <div class="terminal-content">
+                            <span class="comment"># 下载并安装 AutoDial</span><br>
+                            <span class="prompt">PS&gt;</span> <span class="cmd">irm https://raw.githubusercontent.com/khssdsg-maker/AutoDial/main/install.ps1 | iex</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Method 2: CMD -->
+                <div class="install-method">
+                    <h3>方法二：CMD一键安装</h3>
+                    <p style="margin-bottom: 15px; opacity: 0.8;">以管理员身份运行CMD，执行以下命令：</p>
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot red"></div>
+                            <div class="terminal-dot yellow"></div>
+                            <div class="terminal-dot green"></div>
+                            <span class="terminal-title">命令提示符</span>
+                        </div>
+                        <div class="terminal-content">
+                            <span class="comment">:: 下载并安装 AutoDial</span><br>
+                            <span class="prompt">C:\&gt;</span> <span class="cmd">curl -o %TEMP%\install.bat https://raw.githubusercontent.com/khssdsg-maker/AutoDial/main/install.bat && %TEMP%\install.bat</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Method 3: Winget -->
+                <div class="install-method">
+                    <h3>方法三：Winget安装（Windows 11）</h3>
+                    <p style="margin-bottom: 15px; opacity: 0.8;">Windows 11 用户可使用 Winget 包管理器：</p>
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot red"></div>
+                            <div class="terminal-dot yellow"></div>
+                            <div class="terminal-dot green"></div>
+                            <span class="terminal-title">终端</span>
+                        </div>
+                        <div class="terminal-content">
+                            <span class="prompt">PS&gt;</span> <span class="cmd">winget install khssdsg-maker.AutoDial</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Method 4: Manual -->
+                <div class="install-method">
+                    <h3>方法四：手动下载安装</h3>
+                    <p style="margin-bottom: 15px; opacity: 0.8;">下载压缩包，解压后运行：</p>
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot red"></div>
+                            <div class="terminal-dot yellow"></div>
+                            <div class="terminal-dot green"></div>
+                            <span class="terminal-title">步骤</span>
+                        </div>
+                        <div class="terminal-content">
+                            <span class="comment">1. 下载 AutoDial.zip</span><br>
+                            <span class="comment">2. 解压到任意目录</span><br>
+                            <span class="comment">3. 双击 AutoDial.exe 运行</span><br>
+                            <span class="comment">4. 勾选"开机自动拨号"即可</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Install Script -->
+        <div class="card">
+            <h2>快速安装脚本</h2>
+            <p style="margin-bottom: 15px; color: #666;">复制以下命令到PowerShell（管理员），一键完成下载、安装、创建快捷方式：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                <code>$dir = "$env:LOCALAPPDATA\AutoDial"; New-Item -ItemType Directory -Force -Path $dir | Out-Null; Invoke-WebRequest -Uri "https://github.com/khssdsg-maker/AutoDial/releases/download/v2.5/AutoDial.exe" -OutFile "$dir\AutoDial.exe"; Invoke-WebRequest -Uri "https://github.com/khssdsg-maker/ADial/releases/download/v2.5/AutoDial.ico" -OutFile "$dir\AutoDial.ico"; $ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut("$env:USERPROFILE\Desktop\宽带拨号.lnk"); $s.TargetPath = "$dir\AutoDial.exe"; $s.IconLocation = "$dir\AutoDial.ico,0"; $s.Save(); Write-Host "安装完成！桌面已创建快捷方式。"</code>
+            </div>
+        </div>
+
+        <!-- Changelog -->
+        <div class="card">
+            <h2>更新日志</h2>
+            <div class="changelog">
+                <div class="changelog-item">
+                    <h4>v2.5 (2025-07-19)</h4>
+                    <ul>
+                        <li>添加软件图标（紫蓝渐变设计）</li>
+                        <li>标题栏显示更新日志按钮</li>
+                    </ul>
+                </div>
+                <div class="changelog-item">
+                    <h4>v2.4 (2025-07-19)</h4>
+                    <ul>
+                        <li>新增更新日志窗口</li>
+                        <li>点击标题栏按钮查看历史版本</li>
+                    </ul>
+                </div>
+                <div class="changelog-item">
+                    <h4>v2.3 (2025-07-19)</h4>
+                    <ul>
+                        <li>新增密码显示/隐藏切换按钮</li>
+                        <li>新增鼠标悬停提示</li>
+                    </ul>
+                </div>
+                <div class="changelog-item">
+                    <h4>v2.2 (2025-07-19)</h4>
+                    <ul>
+                        <li>新增托盘气泡通知</li>
+                        <li>新增窗口位置记忆功能</li>
+                        <li>新增自动更新检测</li>
+                        <li>优化：创建/删除连接时自动同步账户</li>
+                    </ul>
+                </div>
+                <div class="changelog-item">
+                    <h4>v2.0 (2025-07-19)</h4>
+                    <ul>
+                        <li>升级为WPF现代化界面</li>
+                        <li>卡片式布局，圆角阴影效果</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="card">
+            <h2>常见问题</h2>
+            <div style="line-height: 2;">
+                <p><strong>Q: 软件无法运行？</strong></p>
+                <p style="color: #666; margin-bottom: 15px;">A: 确保已安装 .NET Framework 4.0（Windows 10/11 默认自带）</p>
+                
+                <p><strong>Q: 拨号失败？</strong></p>
+                <p style="color: #666; margin-bottom: 15px;">A: 检查连接名称、用户名、密码是否正确，或查看错误提示</p>
+                
+                <p><strong>Q: 如何取消开机自启动？</strong></p>
+                <p style="color: #666; margin-bottom: 15px;">A: 在软件中取消勾选「开机自动拨号」→ 保存设置</p>
+                
+                <p><strong>Q: 如何备份配置？</strong></p>
+                <p style="color: #666; margin-bottom: 15px;">A: 点击「导出」保存账号文件，在新电脑点击「导入」恢复</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>AutoDial v2.5 | MIT License</p>
+            <p style="margin-top: 10px;">作者: <a href="https://github.com/khssdsg-maker">khssdsg-maker</a></p>
+        </div>
+    </div>
+
+    <script>
+        function copyCode(btn) {
+            const code = btn.parentElement.querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = '已复制';
+                setTimeout(() => btn.textContent = '复制', 2000);
+            });
+        }
+    </script>
+</body>
+</html>
