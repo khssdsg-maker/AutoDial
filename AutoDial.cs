@@ -186,25 +186,9 @@ class AutoDialGUI : Form
         Resize += (s, e) => { if (WindowState == FormWindowState.Minimized) Hide(); };
     }
 
-    bool ConnectionExists(string name)
-    {
-        try
-        {
-            uint result = RasValidateEntryName(null, name);
-            return result == 0;
-        }
-        catch { return false; }
-    }
-
     void CreatePPPoEConnection(string name, string user, string pass)
     {
         if (string.IsNullOrEmpty(name)) { MessageBox.Show("请输入连接名称", "提示"); return; }
-
-        if (ConnectionExists(name))
-        {
-            MessageBox.Show("连接 \"" + name + "\" 已存在，无需重复创建。\n\n如需修改用户名密码，请先删除旧连接再重新创建。", "提示");
-            return;
-        }
 
         try
         {
@@ -259,12 +243,6 @@ class AutoDialGUI : Form
     void DeletePPPoEConnection(string name)
     {
         if (string.IsNullOrEmpty(name)) { MessageBox.Show("请输入要删除的连接名称", "提示"); return; }
-
-        if (!ConnectionExists(name))
-        {
-            MessageBox.Show("连接 \"" + name + "\" 不存在", "提示");
-            return;
-        }
 
         if (MessageBox.Show("确定要从系统中删除连接 \"" + name + "\" 吗？", "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
         {
