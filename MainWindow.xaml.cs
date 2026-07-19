@@ -308,6 +308,11 @@ namespace AutoDial
             }
         }
 
+        string GetCurrentPassword()
+        {
+            return isPasswordVisible ? txtPassVisible.Text : txtPass.Password;
+        }
+
         void SaveAccounts()
         {
             if (!Directory.Exists(appDir)) Directory.CreateDirectory(appDir);
@@ -345,12 +350,13 @@ namespace AutoDial
                 txtName.Text = accounts[i][0];
                 txtUser.Text = accounts[i][1];
                 txtPass.Password = accounts[i][2];
+                txtPassVisible.Text = accounts[i][2];
             }
         }
 
         void BtnAdd_Click(object sender, RoutedEventArgs e)
         {
-            txtName.Text = ""; txtUser.Text = ""; txtPass.Password = "";
+            txtName.Text = ""; txtUser.Text = ""; txtPass.Password = ""; txtPassVisible.Text = "";
             txtName.Focus();
             lstAccounts.SelectedIndex = -1;
         }
@@ -403,7 +409,7 @@ namespace AutoDial
                     "PreSharedKey=\nCacheCredentials=1\nNumCustomPolicy=0\nNumEku=0\nUseMachineRootCert=0\n" +
                     "Disable_IKEv2_Fragmentation=0\nPlumbIKEv2TSAsRoutes=0\nNumServers=0\nRouteVersion=1\n" +
                     "NumRoutes=0\nNumNrptRules=0\nAutoTiggerCapable=0\nNumAppIds=0\nNumClassicAppIds=0\n" +
-                    "SecurityDescriptor=\nApnInfoProviderId=\nApnInfoUsername=" + txtUser.Text + "\nApnInfoPassword=" + txtPass.Password + "\n" +
+                    "SecurityDescriptor=\nApnInfoProviderId=\nApnInfoUsername=" + txtUser.Text + "\nApnInfoPassword=" + GetCurrentPassword() + "\n" +
                     "ApnInfoAccessPoint=\nApnInfoAuthentication=1\nApnInfoCompression=0\nDeviceComplianceEnabled=0\n" +
                     "DeviceComplianceSsoEnabled=0\nDeviceComplianceSsoEku=\nDeviceComplianceSsoIssuer=\nFlagsSet=0\n" +
                     "Options=0\nDisableDefaultDnsSuffixes=0\nNumTrustedNetworks=0\nNumDnsSearchSuffixes=0\n" +
@@ -420,7 +426,7 @@ namespace AutoDial
                 foreach (string[] a in accounts) if (a[0] == name) { exists = true; break; }
                 if (!exists)
                 {
-                    accounts.Add(new string[] { name, txtUser.Text, txtPass.Password });
+                    accounts.Add(new string[] { name, txtUser.Text, GetCurrentPassword() });
                     SaveAccounts();
                     LoadAccounts();
                     lstAccounts.SelectedIndex = lstAccounts.Items.Count - 1;
@@ -511,8 +517,8 @@ namespace AutoDial
         {
             if (string.IsNullOrEmpty(txtName.Text)) { MessageBox.Show("请输入连接名称"); return; }
             int i = lstAccounts.SelectedIndex;
-            if (i >= 0 && i < accounts.Count) accounts[i] = new string[] { txtName.Text, txtUser.Text, txtPass.Password };
-            else accounts.Add(new string[] { txtName.Text, txtUser.Text, txtPass.Password });
+            if (i >= 0 && i < accounts.Count) accounts[i] = new string[] { txtName.Text, txtUser.Text, GetCurrentPassword() };
+            else accounts.Add(new string[] { txtName.Text, txtUser.Text, GetCurrentPassword() });
             SaveAccounts(); SaveSettings(); LoadAccounts();
             lblStatus.Text = "已保存";
         }
@@ -529,7 +535,7 @@ namespace AutoDial
             btnDisconnect.IsEnabled = false;
             lblStatus.Text = "连接中...";
 
-            string name = txtName.Text, user = txtUser.Text, pass = txtPass.Password;
+            string name = txtName.Text, user = txtUser.Text, pass = GetCurrentPassword();
 
             Thread t = new Thread(() =>
             {

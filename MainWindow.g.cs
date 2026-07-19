@@ -185,11 +185,18 @@ namespace AutoDial
             grid.Children.Add(textBox);
         }
 
+        TextBox txtPassVisible;
+        bool isPasswordVisible = false;
+
         void AddPasswordField(Grid grid, string label, int row, out PasswordBox textBox)
         {
             var lbl = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 8) };
             Grid.SetRow(lbl, row);
             grid.Children.Add(lbl);
+
+            var wrapper = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+            wrapper.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            wrapper.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             textBox = new PasswordBox
             {
@@ -198,12 +205,59 @@ namespace AutoDial
                 Background = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF5)),
                 BorderBrush = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0)),
                 BorderThickness = new Thickness(1),
-                Foreground = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
-                Margin = new Thickness(0, 0, 0, 8)
+                Foreground = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33))
             };
-            Grid.SetRow(textBox, row);
-            Grid.SetColumn(textBox, 1);
-            grid.Children.Add(textBox);
+            Grid.SetColumn(textBox, 0);
+            wrapper.Children.Add(textBox);
+
+            txtPassVisible = new TextBox
+            {
+                FontSize = 13,
+                Padding = new Thickness(8, 6, 8, 6),
+                Background = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF5)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0)),
+                BorderThickness = new Thickness(1),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
+                Visibility = Visibility.Collapsed
+            };
+            Grid.SetColumn(txtPassVisible, 0);
+            wrapper.Children.Add(txtPassVisible);
+
+            var toggleBtn = new Button
+            {
+                Content = "👁",
+                FontSize = 14,
+                Padding = new Thickness(6, 4, 6, 4),
+                Margin = new Thickness(4, 0, 0, 0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Background = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0)),
+                BorderThickness = new Thickness(0),
+                ToolTip = "点击显示/隐藏密码"
+            };
+            toggleBtn.Click += TogglePassword_Click;
+            Grid.SetColumn(toggleBtn, 1);
+            wrapper.Children.Add(toggleBtn);
+
+            Grid.SetRow(wrapper, row);
+            Grid.SetColumn(wrapper, 1);
+            grid.Children.Add(wrapper);
+        }
+
+        void TogglePassword_Click(object sender, RoutedEventArgs e)
+        {
+            isPasswordVisible = !isPasswordVisible;
+            if (isPasswordVisible)
+            {
+                txtPassVisible.Text = txtPass.Password;
+                txtPass.Visibility = Visibility.Collapsed;
+                txtPassVisible.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                txtPass.Password = txtPassVisible.Text;
+                txtPass.Visibility = Visibility.Visible;
+                txtPassVisible.Visibility = Visibility.Collapsed;
+            }
         }
     }
 }
