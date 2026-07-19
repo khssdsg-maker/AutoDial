@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -30,6 +31,20 @@ namespace AutoDial
             ResizeMode = ResizeMode.NoResize;
             Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF2, 0xF5));
             FontFamily = new FontFamily("Microsoft YaHei");
+
+            // Load icon
+            try
+            {
+                string iconPath = System.IO.Path.Combine(
+                    System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
+                    "AutoDial.ico");
+                if (System.IO.File.Exists(iconPath))
+                {
+                    var uri = new Uri(iconPath, UriKind.Absolute);
+                    Icon = new System.Windows.Media.Imaging.BitmapImage(uri);
+                }
+            }
+            catch { }
 
             var scrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
             var mainStack = new StackPanel { Margin = new Thickness(20) };
