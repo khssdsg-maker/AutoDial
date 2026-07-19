@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 class AutoDialGUI : Form
@@ -17,6 +18,7 @@ class AutoDialGUI : Form
     TextBox txtName, txtUser, txtPass;
     Label lblStatus, lblOnlineTime, lblSpeed;
     Button btnDial, btnDisconnect, btnSave, btnAdd, btnDelete, btnImport, btnExport;
+    Button btnCreateConnection, btnDeleteConnection;
     CheckBox chkAutoDial, chkSilent, chkAutoReconnect;
     ToolTip tip;
     NotifyIcon trayIcon;
@@ -27,10 +29,26 @@ class AutoDialGUI : Form
     bool isConnected = false;
     bool isDialing = false;
 
+    // Windows API for creating dial-up connections
+    [DllImport("rasapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern uint RasSetEntryProperties(
+        string lpszPhonebook,
+        string lpszEntry,
+        IntPtr lprasentry,
+        int cb,
+        IntPtr lprasstats,
+        IntPtr lpdwreserved);
+
+    [DllImport("rasapi32.dll", CharSet = CharSet.Unicode)]
+    static extern uint RasDeleteEntry(string lpszPhonebook, string lpszEntry);
+
+    [DllImport("rasapi32.dll", CharSet = CharSet.Unicode)]
+    static extern uint RasValidateEntryName(string lpszPhonebook, string lpszEntry);
+
     public AutoDialGUI()
     {
         Text = "宽带自动拨号";
-        Size = new Size(500, 620);
+        Size = new Size(500, 680);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
@@ -39,88 +57,98 @@ class AutoDialGUI : Form
 
         // Account list
         Label l0 = new Label { Text = "账号列表:", Location = new Point(20, 15), AutoSize = true, Font = new Font("Microsoft YaHei", 11, FontStyle.Bold) };
-        lstAccounts = new ListBox { Location = new Point(20, 45), Width = 430, Height = 100, Font = new Font("Microsoft YaHei", 11) };
+        lstAccounts = new ListBox { Location = new Point(20, 45), Width = 430, Height = 90, Font = new Font("Microsoft YaHei", 11) };
         lstAccounts.SelectedIndexChanged += LstAccounts_SelectedIndexChanged;
         tip.SetToolTip(lstAccounts, "选择要操作的宽带账号");
 
-        btnAdd = new Button { Text = "新增账号", Location = new Point(20, 155), Width = 100, Height = 32 };
+        btnAdd = new Button { Text = "新增", Location = new Point(20, 145), Width = 70, Height = 28 };
         btnAdd.Click += BtnAdd_Click;
-        tip.SetToolTip(btnAdd, "添加一个新的宽带拨号账号");
+        tip.SetToolTip(btnAdd, "添加一个新的宽带账号");
 
-        btnDelete = new Button { Text = "删除账号", Location = new Point(130, 155), Width = 100, Height = 32 };
+        btnDelete = new Button { Text = "删除", Location = new Point(100, 145), Width = 70, Height = 28 };
         btnDelete.Click += BtnDelete_Click;
-        tip.SetToolTip(btnDelete, "删除当前选中的宽带账号");
+        tip.SetToolTip(btnDelete, "删除当前选中的账号");
 
-        btnImport = new Button { Text = "导入配置", Location = new Point(240, 155), Width = 100, Height = 32 };
+        btnImport = new Button { Text = "导入", Location = new Point(180, 145), Width = 70, Height = 28 };
         btnImport.Click += BtnImport_Click;
-        tip.SetToolTip(btnImport, "从文件导入账号配置，支持 .txt 和 .adial 格式");
+        tip.SetToolTip(btnImport, "从文件导入账号配置");
 
-        btnExport = new Button { Text = "导出配置", Location = new Point(350, 155), Width = 100, Height = 32 };
+        btnExport = new Button { Text = "导出", Location = new Point(260, 145), Width = 70, Height = 28 };
         btnExport.Click += BtnExport_Click;
-        tip.SetToolTip(btnExport, "将账号配置导出到文件，方便备份或迁移");
+        tip.SetToolTip(btnExport, "将账号配置导出到文件");
+
+        // Windows connection management
+        Label lConn = new Label { Text = "系统连接:", Location = new Point(340, 130), AutoSize = true, Font = new Font("Microsoft YaHei", 9) };
+
+        btnCreateConnection = new Button { Text = "创建连接", Location = new Point(340, 145), Width = 110, Height = 28 };
+        btnCreateConnection.Click += BtnCreateConnection_Click;
+        tip.SetToolTip(btnCreateConnection, "在Windows中创建宽带拨号连接（新设备必点）");
+
+        btnDeleteConnection = new Button { Text = "删除系统连接", Location = new Point(340, 178), Width = 110, Height = 28 };
+        btnDeleteConnection.Click += BtnDeleteConnection_Click;
+        tip.SetToolTip(btnDeleteConnection, "从Windows中删除宽带拨号连接");
 
         // Edit fields
-        Label l1 = new Label { Text = "连接名称:", Location = new Point(20, 200), AutoSize = true };
-        txtName = new TextBox { Location = new Point(110, 197), Width = 340, Font = new Font("Microsoft YaHei", 11) };
-        tip.SetToolTip(txtName, "Windows宽带连接名称，默认为 宽带连接");
+        Label l1 = new Label { Text = "连接名称:", Location = new Point(20, 215), AutoSize = true };
+        txtName = new TextBox { Location = new Point(110, 212), Width = 340, Font = new Font("Microsoft YaHei", 11) };
+        tip.SetToolTip(txtName, "宽带连接名称，例如：宽带连接");
 
-        Label l2 = new Label { Text = "用户名:", Location = new Point(20, 240), AutoSize = true };
-        txtUser = new TextBox { Location = new Point(110, 237), Width = 340, Font = new Font("Microsoft YaHei", 11) };
+        Label l2 = new Label { Text = "用户名:", Location = new Point(20, 255), AutoSize = true };
+        txtUser = new TextBox { Location = new Point(110, 252), Width = 340, Font = new Font("Microsoft YaHei", 11) };
         tip.SetToolTip(txtUser, "宽带拨号的用户名，由运营商提供");
 
-        Label l3 = new Label { Text = "密码:", Location = new Point(20, 280), AutoSize = true };
-        txtPass = new TextBox { Location = new Point(110, 277), Width = 340, Font = new Font("Microsoft YaHei", 11), UseSystemPasswordChar = true };
+        Label l3 = new Label { Text = "密码:", Location = new Point(20, 295), AutoSize = true };
+        txtPass = new TextBox { Location = new Point(110, 292), Width = 340, Font = new Font("Microsoft YaHei", 11), UseSystemPasswordChar = true };
         tip.SetToolTip(txtPass, "宽带拨号的密码，由运营商提供");
 
         // Settings section
-        Label l4 = new Label { Text = "设置:", Location = new Point(20, 320), AutoSize = true, Font = new Font("Microsoft YaHei", 11, FontStyle.Bold) };
+        Label l4 = new Label { Text = "设置:", Location = new Point(20, 335), AutoSize = true, Font = new Font("Microsoft YaHei", 11, FontStyle.Bold) };
 
-        chkAutoDial = new CheckBox { Text = "开机自动拨号", Location = new Point(20, 345), AutoSize = true };
+        chkAutoDial = new CheckBox { Text = "开机自动拨号", Location = new Point(20, 360), AutoSize = true };
         tip.SetToolTip(chkAutoDial, "开启后，每次开机登录Windows时自动执行拨号连接");
 
-        chkSilent = new CheckBox { Text = "静默拨号", Location = new Point(200, 345), AutoSize = true };
+        chkSilent = new CheckBox { Text = "静默拨号", Location = new Point(200, 360), AutoSize = true };
         tip.SetToolTip(chkSilent, "开机拨号时不弹出界面窗口，后台自动连接");
 
-        chkAutoReconnect = new CheckBox { Text = "断线自动重连", Location = new Point(340, 345), AutoSize = true };
+        chkAutoReconnect = new CheckBox { Text = "断线自动重连", Location = new Point(340, 360), AutoSize = true };
         tip.SetToolTip(chkAutoReconnect, "检测到断线后自动重新拨号连接");
 
         // Status section
-        Label l5 = new Label { Text = "连接状态:", Location = new Point(20, 380), AutoSize = true, Font = new Font("Microsoft YaHei", 11, FontStyle.Bold) };
+        Label l5 = new Label { Text = "连接状态:", Location = new Point(20, 400), AutoSize = true, Font = new Font("Microsoft YaHei", 11, FontStyle.Bold) };
 
-        lblStatus = new Label { Text = "未连接", Location = new Point(110, 382), AutoSize = true, ForeColor = Color.Gray };
+        lblStatus = new Label { Text = "未连接", Location = new Point(110, 402), AutoSize = true, ForeColor = Color.Gray };
         tip.SetToolTip(lblStatus, "当前网络连接状态");
 
-        lblOnlineTime = new Label { Text = "在线时长: --:--:--", Location = new Point(20, 410), AutoSize = true };
+        lblOnlineTime = new Label { Text = "在线时长: --:--:--", Location = new Point(20, 430), AutoSize = true };
         tip.SetToolTip(lblOnlineTime, "当前连接已持续的时间");
 
-        lblSpeed = new Label { Text = "网络速度: -- Mbps", Location = new Point(250, 410), AutoSize = true };
+        lblSpeed = new Label { Text = "网络速度: -- Mbps", Location = new Point(250, 430), AutoSize = true };
         tip.SetToolTip(lblSpeed, "当前网络连接速度");
 
         // Action buttons
-        btnDial = new Button { Text = "拨号连接", Location = new Point(20, 450), Width = 130, Height = 40, BackColor = Color.FromArgb(0, 120, 215), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        btnDial = new Button { Text = "拨号连接", Location = new Point(20, 470), Width = 130, Height = 40, BackColor = Color.FromArgb(0, 120, 215), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
         btnDial.Click += BtnDial_Click;
         tip.SetToolTip(btnDial, "使用当前选中的账号进行宽带拨号");
 
-        btnDisconnect = new Button { Text = "断开连接", Location = new Point(160, 450), Width = 130, Height = 40 };
+        btnDisconnect = new Button { Text = "断开连接", Location = new Point(160, 470), Width = 130, Height = 40 };
         btnDisconnect.Click += BtnDisconnect_Click;
         tip.SetToolTip(btnDisconnect, "断开当前的宽带连接");
 
-        btnSave = new Button { Text = "保存设置", Location = new Point(310, 450), Width = 140, Height = 40, BackColor = Color.FromArgb(0, 153, 51), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        btnSave = new Button { Text = "保存设置", Location = new Point(310, 470), Width = 140, Height = 40, BackColor = Color.FromArgb(0, 153, 51), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
         btnSave.Click += BtnSave_Click;
         tip.SetToolTip(btnSave, "保存所有配置和设置");
 
         Controls.AddRange(new Control[] {
             l0, lstAccounts, btnAdd, btnDelete, btnImport, btnExport,
+            lConn, btnCreateConnection, btnDeleteConnection,
             l1, txtName, l2, txtUser, l3, txtPass,
             l4, chkAutoDial, chkSilent, chkAutoReconnect,
             l5, lblStatus, lblOnlineTime, lblSpeed,
             btnDial, btnDisconnect, btnSave
         });
 
-        // System tray setup
         SetupTray();
 
-        // Status check timer (every 3 seconds)
         statusTimer = new Timer { Interval = 3000 };
         statusTimer.Tick += StatusTimer_Tick;
         statusTimer.Start();
@@ -132,22 +160,133 @@ class AutoDialGUI : Form
         Resize += (s, e) => { if (WindowState == FormWindowState.Minimized) Hide(); };
     }
 
+    bool ConnectionExists(string name)
+    {
+        try
+        {
+            uint result = RasValidateEntryName(null, name);
+            return result == 0; // ERROR_SUCCESS means entry exists
+        }
+        catch { return false; }
+    }
+
+    void CreatePPPoEConnection(string name, string user, string pass)
+    {
+        if (string.IsNullOrEmpty(name)) { MessageBox.Show("请输入连接名称", "提示"); return; }
+
+        if (ConnectionExists(name))
+        {
+            MessageBox.Show("连接 \"" + name + "\" 已存在，无需重复创建", "提示");
+            return;
+        }
+
+        try
+        {
+            // Create RASENTRY structure
+            int entrySize = 1024; // Large enough buffer
+            IntPtr entryPtr = Marshal.AllocHGlobal(entrySize);
+
+            // Zero out the buffer
+            byte[] buffer = new byte[entrySize];
+            Marshal.Copy(buffer, 0, entryPtr, entrySize);
+
+            // Set dwSize (offset 0, 4 bytes)
+            Marshal.WriteInt32(entryPtr, 0, entrySize);
+
+            // Set dwfOptions (offset 4, 4 bytes)
+            // RASEO_IpHeaderCompression = 0x00010000
+            // RASEO_RemoteDefaultGateway = 0x00000004
+            Marshal.WriteInt32(entryPtr, 4, 0x00010004);
+
+            // Set szEntryName (offset 76, 256 chars = 512 bytes for Unicode)
+            byte[] nameBytes = System.Text.Encoding.Unicode.GetBytes(name + "\0");
+            Marshal.Copy(nameBytes, 0, entryPtr + 76, Math.Min(nameBytes.Length, 512));
+
+            // Set szDeviceType (offset 88 + 256*2 = 600, 16 chars = 32 bytes)
+            byte[] devType = System.Text.Encoding.Unicode.GetBytes("PPPoE\0");
+            Marshal.Copy(devType, 0, entryPtr + 600, Math.Min(devType.Length, 32));
+
+            // Set szDeviceName (offset 632, 128 chars = 256 bytes)
+            byte[] devName = System.Text.Encoding.Unicode.GetBytes("WAN Miniport (PPPOE)\0");
+            Marshal.Copy(devName, 0, entryPtr + 632, Math.Min(devName.Length, 256));
+
+            // Set szUserName (offset 888, 256 chars = 512 bytes)
+            byte[] userBytes = System.Text.Encoding.Unicode.GetBytes(user + "\0");
+            Marshal.Copy(userBytes, 0, entryPtr + 888, Math.Min(userBytes.Length, 512));
+
+            // Set szPassword (offset 1400, 256 chars = 512 bytes)
+            byte[] passBytes = System.Text.Encoding.Unicode.GetBytes(pass + "\0");
+            Marshal.Copy(passBytes, 0, entryPtr + 1400, Math.Min(passBytes.Length, 512));
+
+            // Set szDomain (offset 1912, 16 chars = 32 bytes)
+            byte[] domain = System.Text.Encoding.Unicode.GetBytes("*\0");
+            Marshal.Copy(domain, 0, entryPtr + 1912, Math.Min(domain.Length, 32));
+
+            // Call RasSetEntryProperties
+            uint result = RasSetEntryProperties(null, name, entryPtr, entrySize, IntPtr.Zero, IntPtr.Zero);
+
+            Marshal.FreeHGlobal(entryPtr);
+
+            if (result == 0)
+            {
+                MessageBox.Show("系统连接 \"" + name + "\" 创建成功！\n\n现在可以点击「拨号连接」了。", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("创建失败，错误码: " + result + "\n\n请尝试在Windows设置中手动创建连接。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("创建连接时出错: " + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    void DeletePPPoEConnection(string name)
+    {
+        if (string.IsNullOrEmpty(name)) { MessageBox.Show("请输入要删除的连接名称", "提示"); return; }
+
+        if (!ConnectionExists(name))
+        {
+            MessageBox.Show("连接 \"" + name + "\" 不存在", "提示");
+            return;
+        }
+
+        if (MessageBox.Show("确定要从系统中删除连接 \"" + name + "\" 吗？\n\n注意：这只会删除Windows中的拨号连接，不会删除软件中的账号配置。", "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+        {
+            try
+            {
+                uint result = RasDeleteEntry(null, name);
+                if (result == 0)
+                {
+                    MessageBox.Show("系统连接 \"" + name + "\" 已删除", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("删除失败，错误码: " + result, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("删除时出错: " + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+
     void SetupTray()
     {
         trayMenu = new ContextMenuStrip();
         trayMenu.Items.Add("显示窗口", null, (s, e) => { Show(); WindowState = FormWindowState.Normal; });
-        trayMenu.Items.Add("-"); // separator
+        trayMenu.Items.Add("-");
         trayMenu.Items.Add("拨号连接", null, (s, e) => BtnDial_Click(s, e));
         trayMenu.Items.Add("断开连接", null, (s, e) => BtnDisconnect_Click(s, e));
-        trayMenu.Items.Add("-"); // separator
+        trayMenu.Items.Add("-");
         trayMenu.Items.Add("退出", null, (s, e) => { Application.Exit(); });
 
-        // Create tray icon
-        Icon trayIconIcon = CreateTrayIcon();
         trayIcon = new NotifyIcon
         {
             Text = "宽带自动拨号 - 未连接",
-            Icon = trayIconIcon,
+            Icon = CreateTrayIcon(),
             ContextMenuStrip = trayMenu,
             Visible = true
         };
@@ -510,13 +649,32 @@ class AutoDialGUI : Form
         }
     }
 
+    void BtnCreateConnection_Click(object s, EventArgs e)
+    {
+        if (string.IsNullOrEmpty(txtName.Text))
+        {
+            MessageBox.Show("请先填写连接名称、用户名和密码", "提示");
+            return;
+        }
+        CreatePPPoEConnection(txtName.Text, txtUser.Text, txtPass.Text);
+    }
+
+    void BtnDeleteConnection_Click(object s, EventArgs e)
+    {
+        if (string.IsNullOrEmpty(txtName.Text))
+        {
+            MessageBox.Show("请输入要删除的连接名称", "提示");
+            return;
+        }
+        DeletePPPoEConnection(txtName.Text);
+    }
+
     void BtnImport_Click(object s, EventArgs e)
     {
         OpenFileDialog ofd = new OpenFileDialog
         {
             Title = "导入账号配置",
-            Filter = "配置文件 (*.txt;*.adial)|*.txt;*.adial|所有文件 (*.*)|*.*",
-            FilterIndex = 1
+            Filter = "配置文件 (*.txt;*.adial)|*.txt;*.adial|所有文件 (*.*)|*.*"
         };
 
         if (ofd.ShowDialog() == DialogResult.OK)
@@ -531,12 +689,9 @@ class AutoDialGUI : Form
                     string[] p = line.Split(new char[] { '|' }, 3);
                     if (p.Length >= 1 && !string.IsNullOrEmpty(p[0]))
                     {
-                        // Check if account already exists
                         bool exists = false;
                         foreach (string[] acc in accounts)
-                        {
                             if (acc[0] == p[0]) { exists = true; break; }
-                        }
                         if (!exists)
                         {
                             accounts.Add(new string[] { p[0], p.Length >= 2 ? p[1] : "", p.Length >= 3 ? p[2] : "" });
@@ -544,8 +699,7 @@ class AutoDialGUI : Form
                         }
                     }
                 }
-                SaveAccounts();
-                LoadAccounts();
+                SaveAccounts(); LoadAccounts();
                 MessageBox.Show("导入成功！新增 " + count + " 个账号", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -557,17 +711,12 @@ class AutoDialGUI : Form
 
     void BtnExport_Click(object s, EventArgs e)
     {
-        if (accounts.Count == 0)
-        {
-            MessageBox.Show("没有账号可以导出", "提示");
-            return;
-        }
+        if (accounts.Count == 0) { MessageBox.Show("没有账号可以导出", "提示"); return; }
 
         SaveFileDialog sfd = new SaveFileDialog
         {
             Title = "导出账号配置",
             Filter = "配置文件 (*.adial)|*.adial|文本文件 (*.txt)|*.txt",
-            FilterIndex = 1,
             FileName = "AutoDial_accounts_" + DateTime.Now.ToString("yyyyMMdd") + ".adial"
         };
 
@@ -579,7 +728,7 @@ class AutoDialGUI : Form
                 foreach (string[] acc in accounts)
                     lines.Add(acc[0] + "|" + acc[1] + "|" + acc[2]);
                 File.WriteAllLines(sfd.FileName, lines.ToArray());
-                MessageBox.Show("导出成功！共 " + accounts.Count + " 个账号\n\n文件: " + sfd.FileName, "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("导出成功！共 " + accounts.Count + " 个账号", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
