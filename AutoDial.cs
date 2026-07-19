@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using System.Windows.Forms;
 
 class AutoDialGUI : Form
@@ -26,7 +27,7 @@ class AutoDialGUI : Form
     NotifyIcon trayIcon;
     ContextMenuStrip trayMenu;
     List<string[]> accounts = new List<string[]>();
-    Timer statusTimer;
+    System.Windows.Forms.Timer statusTimer;
     DateTime? connectTime;
     bool isConnected = false;
     bool isDialing = false;
@@ -107,7 +108,7 @@ class AutoDialGUI : Form
 
         SetupTray();
 
-        statusTimer = new Timer { Interval = 3000 };
+        statusTimer = new System.Windows.Forms.Timer { Interval = 3000 };
         statusTimer.Tick += StatusTimer_Tick;
         statusTimer.Start();
 
@@ -424,22 +425,46 @@ class AutoDialGUI : Form
 
     void AutoReconnect()
     {
-        if (accounts.Count == 0) return;
+        if (accounts.Count == 0 || isDialing) return;
         int idx = lstAccounts.SelectedIndex >= 0 ? lstAccounts.SelectedIndex : 0;
         if (idx >= accounts.Count) idx = 0;
         string name = accounts[idx][0], user = accounts[idx][1], pass = accounts[idx][2];
-        lblStatus.Text = "重连中..."; lblStatus.ForeColor = Color.Orange;
-        Application.DoEvents();
-        try
+
+        isDialing = true;
+        lblStatus.Text = "重连中...";
+        lblStatus.ForeColor = Color.Orange;
+
+        Thread t = new Thread(() =>
         {
-            string args = "\"" + name + "\"";
-            if (!string.IsNullOrEmpty(user)) args += " \"" + user + "\" \"" + pass + "\"";
-            Process proc = Process.Start(new ProcessStartInfo { FileName = "rasdial.exe", Arguments = args, UseShellExecute = false, CreateNoWindow = true });
-            proc.WaitForExit();
-            if (proc.ExitCode == 0) { connectTime = DateTime.Now; lblStatus.Text = "已连接 - " + name; lblStatus.ForeColor = Color.Green; }
-            else { lblStatus.Text = "重连失败 - " + GetErrorDesc(proc.ExitCode); lblStatus.ForeColor = Color.Red; }
-        }
-        catch (Exception ex) { lblStatus.Text = "错误 - " + ex.Message; lblStatus.ForeColor = Color.Red; }
+            int exitCode = -1;
+            try
+            {
+                string args = "\"" + name + "\"";
+                if (!string.IsNullOrEmpty(user)) args += " \"" + user + "\" \"" + pass + "\"";
+                Process proc = Process.Start(new ProcessStartInfo { FileName = "rasdial.exe", Arguments = args, UseShellExecute = false, CreateNoWindow = true });
+                proc.WaitForExit();
+                exitCode = proc.ExitCode;
+            }
+            catch { exitCode = -1; }
+
+            this.Invoke((MethodInvoker)delegate
+            {
+                if (exitCode == 0)
+                {
+                    connectTime = DateTime.Now;
+                    lblStatus.Text = "已连接 - " + name;
+                    lblStatus.ForeColor = Color.Green;
+                }
+                else
+                {
+                    lblStatus.Text = "重连失败 - " + GetErrorDesc(exitCode);
+                    lblStatus.ForeColor = Color.Red;
+                }
+                isDialing = false;
+            });
+        });
+        t.IsBackground = true;
+        t.Start();
     }
 
     void UpdateOnlineTime()
@@ -583,24 +608,53 @@ class AutoDialGUI : Form
     void BtnDial_Click(object s, EventArgs e)
     {
         if (string.IsNullOrEmpty(txtName.Text)) { MessageBox.Show("请选择或输入账号", "提示"); return; }
-        isDialing = true; btnDial.Enabled = false;
-        lblStatus.Text = "连接中..."; lblStatus.ForeColor = Color.Orange; Application.DoEvents();
-        try
+        if (isDialing) return;
+
+        isDialing = true;
+        btnDial.Enabled = false;
+        btnDisconnect.Enabled = false;
+        lblStatus.Text = "连接中...";
+        lblStatus.ForeColor = Color.Orange;
+
+        string name = txtName.Text;
+        string user = txtUser.Text;
+        string pass = txtPass.Text;
+
+        Thread t = new Thread(() =>
         {
-            string args = "\"" + txtName.Text + "\"";
-            if (!string.IsNullOrEmpty(txtUser.Text)) args += " \"" + txtUser.Text + "\" \"" + txtPass.Text + "\"";
-            Process proc = Process.Start(new ProcessStartInfo { FileName = "rasdial.exe", Arguments = args, UseShellExecute = false, CreateNoWindow = true });
-            proc.WaitForExit();
-            if (proc.ExitCode == 0)
+            int exitCode = -1;
+            try
             {
-                connectTime = DateTime.Now; isConnected = true;
-                lblStatus.Text = "已连接 - " + txtName.Text; lblStatus.ForeColor = Color.Green;
-                UpdateTrayIcon(true);
+                string args = "\"" + name + "\"";
+                if (!string.IsNullOrEmpty(user)) args += " \"" + user + "\" \"" + pass + "\"";
+                Process proc = Process.Start(new ProcessStartInfo { FileName = "rasdial.exe", Arguments = args, UseShellExecute = false, CreateNoWindow = true });
+                proc.WaitForExit();
+                exitCode = proc.ExitCode;
             }
-            else { lblStatus.Text = "失败 - " + GetErrorDesc(proc.ExitCode); lblStatus.ForeColor = Color.Red; }
-        }
-        catch (Exception ex) { lblStatus.Text = "错误 - " + ex.Message; lblStatus.ForeColor = Color.Red; }
-        btnDial.Enabled = true; isDialing = false;
+            catch { exitCode = -1; }
+
+            this.Invoke((MethodInvoker)delegate
+            {
+                if (exitCode == 0)
+                {
+                    connectTime = DateTime.Now;
+                    isConnected = true;
+                    lblStatus.Text = "已连接 - " + name;
+                    lblStatus.ForeColor = Color.Green;
+                    UpdateTrayIcon(true);
+                }
+                else
+                {
+                    lblStatus.Text = "失败 - " + GetErrorDesc(exitCode);
+                    lblStatus.ForeColor = Color.Red;
+                }
+                btnDial.Enabled = true;
+                btnDisconnect.Enabled = true;
+                isDialing = false;
+            });
+        });
+        t.IsBackground = true;
+        t.Start();
     }
 
     void BtnDisconnect_Click(object s, EventArgs e)
