@@ -33,10 +33,47 @@
 - **更新日志** - 点击标题栏按钮查看历史版本
 - **连接账户联动** - 创建/删除系统连接时自动同步账户列表
 
+## 安装方法
+
+### 方法一：绿色版（推荐）
+
+1. 下载 `AutoDial.exe` 和 `AutoDial.ico`（两个文件放在同一目录）
+2. 双击 `AutoDial.exe` 运行
+3. 无需安装，直接使用
+
+### 方法二：创建桌面快捷方式
+
+1. 下载 `AutoDial.exe` 和 `AutoDial.ico`
+2. 将文件放到固定位置（如 `C:\Program Files\AutoDial\`）
+3. 右键 `AutoDial.exe` → 发送到 → 桌面快捷方式
+4. 右键桌面快捷方式 → 属性 → 更改图标 → 选择 `AutoDial.ico`
+
+### 方法三：开机自启动
+
+1. 运行软件
+2. 勾选「开机自动拨号」
+3. 点击「保存设置」
+4. 软件会自动添加到 Windows 启动项
+
+### 方法四：手动添加到启动项
+
+1. 按 `Win + R`，输入 `shell:startup`，回车
+2. 将 `AutoDial.exe` 和 `AutoDial.ico` 复制到打开的文件夹
+3. 每次开机登录后会自动运行
+
+### 方法五：计划任务（高级）
+
+1. 按 `Win + R`，输入 `taskschd.msc`，回车
+2. 点击「创建基本任务」
+3. 名称：`AutoDial`，描述：`宽带自动拨号`
+4. 触发器：「当用户登录时」
+5. 操作：「启动程序」→ 选择 `AutoDial.exe`
+6. 完成
+
 ## 使用方法
 
 ### 新设备首次使用（推荐）
-1. 下载并运行 `AutoDial.exe`（需同时下载 `AutoDial.ico`）
+1. 运行 `AutoDial.exe`
 2. 输入连接名称、用户名、密码
 3. 点击「创建系统连接」（自动创建Windows连接并添加到账户列表）
 4. 点击「拨号连接」即可上网
@@ -59,6 +96,10 @@
 1. 输入密码后，点击右侧眼睛按钮可显示密码
 2. 再次点击可隐藏密码
 
+### 导入/导出配置
+1. 点击「导出」保存账号到文件
+2. 在新电脑上点击「导入」选择文件
+
 ## 系统要求
 
 - Windows 10 / 11
@@ -72,12 +113,24 @@ C:\WINDOWS\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:Auto
 
 ## 文件说明
 
+### 程序文件
 - `AutoDial.exe` - 主程序
 - `AutoDial.ico` - 软件图标
-- `*.cs` / `*.xaml` - 源代码文件
-- `%APPDATA%\AutoDial\accounts.txt` - 账号配置文件
+
+### 源代码文件
+- `App.xaml.cs` - 应用程序入口
+- `MainWindow.xaml.cs` - 主窗口逻辑
+- `MainWindow.g.cs` - 主窗口界面定义
+- `MainWindow.xaml` - XAML界面定义（备用）
+
+### 配置文件（运行时生成）
+- `%APPDATA%\AutoDial\accounts.txt` - 账号配置
 - `%APPDATA%\AutoDial\settings.txt` - 设置文件
 - `%APPDATA%\AutoDial\window.txt` - 窗口位置记录
+
+### 启动项（开启自启动后生成）
+- `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\AutoDial.exe`
+- `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\AutoDial.ico`
 
 ## 更新日志
 
@@ -130,6 +183,23 @@ C:\WINDOWS\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:Auto
 
 ### v1.0 (2025-06-14)
 - 初始版本发布
+
+## 常见问题
+
+### Q: 软件无法运行？
+A: 确保已安装 .NET Framework 4.0（Windows 10/11 默认自带）
+
+### Q: 拨号失败？
+A: 检查连接名称、用户名、密码是否正确，或查看错误提示
+
+### Q: 如何取消开机自启动？
+A: 在软件中取消勾选「开机自动拨号」→ 保存设置
+
+### Q: 如何备份配置？
+A: 点击「导出」保存账号文件，在新电脑点击「导入」恢复
+
+### Q: 图标不显示？
+A: 确保 `AutoDial.ico` 与 `AutoDial.exe` 在同一目录
 
 ## 许可证
 
