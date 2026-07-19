@@ -24,26 +24,27 @@ namespace AutoDial
         private void InitializeComponent()
         {
             Title = "宽带自动拨号";
-            Height = 680;
+            Height = 780;
             Width = 520;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             ResizeMode = ResizeMode.NoResize;
             Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF2, 0xF5));
             FontFamily = new FontFamily("Microsoft YaHei");
 
+            var scrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
             var mainStack = new StackPanel { Margin = new Thickness(20) };
 
             // Title
-            mainStack.Children.Add(new TextBlock { Text = "宽带自动拨号", FontSize = 24, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x2E)), Margin = new Thickness(0, 0, 0, 16) });
+            mainStack.Children.Add(new TextBlock { Text = "宽带自动拨号", FontSize = 22, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x2E)), Margin = new Thickness(0, 0, 0, 12) });
 
             // Account List Card
             var card1 = CreateCard();
             var card1Stack = new StackPanel();
-            card1Stack.Children.Add(new TextBlock { Text = "账号列表", FontSize = 15, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 12) });
-            lstAccounts = new ListBox { Height = 90, FontSize = 14, BorderThickness = new Thickness(0) };
+            card1Stack.Children.Add(new TextBlock { Text = "账号列表", FontSize = 14, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 8) });
+            lstAccounts = new ListBox { Height = 80, FontSize = 13, BorderThickness = new Thickness(0) };
             lstAccounts.SelectionChanged += lstAccounts_SelectionChanged;
             card1Stack.Children.Add(lstAccounts);
-            var btnPanel1 = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
+            var btnPanel1 = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
             btnPanel1.Children.Add(MakeBtn("新增", BtnAdd_Click, "#E0E0E0", "#555"));
             btnPanel1.Children.Add(MakeBtn("删除", BtnDelete_Click, "#E0E0E0", "#555"));
             btnPanel1.Children.Add(MakeBtn("导入", BtnImport_Click, "#E0E0E0", "#555"));
@@ -57,7 +58,7 @@ namespace AutoDial
             // Fields Card
             var card2 = CreateCard();
             var fieldsGrid = new Grid();
-            fieldsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
+            fieldsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
             fieldsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             for (int i = 0; i < 6; i++) fieldsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
@@ -71,11 +72,11 @@ namespace AutoDial
             // Settings Card
             var card3 = CreateCard();
             var settingsStack = new StackPanel();
-            settingsStack.Children.Add(new TextBlock { Text = "设置", FontSize = 15, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 12) });
+            settingsStack.Children.Add(new TextBlock { Text = "设置", FontSize = 14, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 8) });
             var checksPanel = new StackPanel { Orientation = Orientation.Horizontal };
-            chkAutoDial = new CheckBox { Content = "开机自动拨号", FontSize = 13, Margin = new Thickness(0, 0, 15, 0) };
-            chkSilent = new CheckBox { Content = "静默拨号", FontSize = 13, Margin = new Thickness(0, 0, 15, 0) };
-            chkAutoReconnect = new CheckBox { Content = "断线自动重连", FontSize = 13 };
+            chkAutoDial = new CheckBox { Content = "开机自动拨号", FontSize = 12, Margin = new Thickness(0, 0, 12, 0) };
+            chkSilent = new CheckBox { Content = "静默拨号", FontSize = 12, Margin = new Thickness(0, 0, 12, 0) };
+            chkAutoReconnect = new CheckBox { Content = "断线自动重连", FontSize = 12 };
             checksPanel.Children.Add(chkAutoDial);
             checksPanel.Children.Add(chkSilent);
             checksPanel.Children.Add(chkAutoReconnect);
@@ -84,35 +85,35 @@ namespace AutoDial
             mainStack.Children.Add(card3);
 
             // Status
-            var statusBorder = new Border { Background = Brushes.White, CornerRadius = new CornerRadius(8), Padding = new Thickness(16, 12, 16, 12) };
+            var statusBorder = new Border { Background = Brushes.White, CornerRadius = new CornerRadius(8), Padding = new Thickness(12, 10, 12, 10), Margin = new Thickness(0, 0, 0, 10) };
             var statusPanel = new StackPanel { Orientation = Orientation.Horizontal };
-            statusDot = new Ellipse { Width = 12, Height = 12, Fill = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99)), Margin = new Thickness(0, 0, 10, 0) };
+            statusDot = new Ellipse { Width = 10, Height = 10, Fill = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99)), Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
             statusPanel.Children.Add(statusDot);
-            lblStatus = new TextBlock { Text = "未连接", FontSize = 14, Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 20, 0) };
+            lblStatus = new TextBlock { Text = "未连接", FontSize = 13, Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 15, 0) };
             statusPanel.Children.Add(lblStatus);
-            lblOnlineTime = new TextBlock { Text = "--:--:--", FontSize = 13, Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99)), VerticalAlignment = VerticalAlignment.Center };
+            lblOnlineTime = new TextBlock { Text = "--:--:--", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99)), VerticalAlignment = VerticalAlignment.Center };
             statusPanel.Children.Add(lblOnlineTime);
             statusBorder.Child = statusPanel;
             mainStack.Children.Add(statusBorder);
-            mainStack.Children.Add(new Border { Height = 10 });
 
             // Action Buttons
-            var btnPanel2 = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
+            var btnPanel2 = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 10) };
             btnDial = MakeActionBtn("拨号连接", BtnDial_Click, "#2196F3");
             btnDisconnect = MakeActionBtn("断开连接", BtnDisconnect_Click, "#F44336");
             btnPanel2.Children.Add(btnDial);
             btnPanel2.Children.Add(new Border { Width = 10 });
             btnPanel2.Children.Add(btnDisconnect);
             mainStack.Children.Add(btnPanel2);
-            mainStack.Children.Add(new Border { Height = 10 });
 
+            // Save Button
             btnSave = MakeActionBtn("保存设置", BtnSave_Click, "#4CAF50");
             btnSave.HorizontalAlignment = HorizontalAlignment.Center;
-            btnSave.Width = 200;
-            btnSave.Height = 42;
+            btnSave.Width = 180;
+            btnSave.Height = 40;
             mainStack.Children.Add(btnSave);
 
-            Content = mainStack;
+            scrollViewer.Content = mainStack;
+            Content = scrollViewer;
         }
 
         Border CreateCard()
@@ -120,10 +121,10 @@ namespace AutoDial
             return new Border
             {
                 Background = Brushes.White,
-                CornerRadius = new CornerRadius(10),
-                Padding = new Thickness(20),
-                Margin = new Thickness(0, 0, 0, 12),
-                Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 15, Opacity = 0.08, ShadowDepth = 2 }
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(16),
+                Margin = new Thickness(0, 0, 0, 10),
+                Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 10, Opacity = 0.06, ShadowDepth = 2 }
             };
         }
 
@@ -135,9 +136,9 @@ namespace AutoDial
                 Background = (Brush)new BrushConverter().ConvertFromString(bg),
                 Foreground = (Brush)new BrushConverter().ConvertFromString(fg),
                 BorderThickness = new Thickness(0),
-                Padding = new Thickness(12, 6, 12, 6),
-                FontSize = 12,
-                Margin = new Thickness(3, 0, 3, 0),
+                Padding = new Thickness(10, 5, 10, 5),
+                FontSize = 11,
+                Margin = new Thickness(2, 0, 2, 0),
                 Cursor = System.Windows.Input.Cursors.Hand
             };
             btn.Click += click;
@@ -151,12 +152,12 @@ namespace AutoDial
                 Content = text,
                 Background = (Brush)new BrushConverter().ConvertFromString(bg),
                 Foreground = Brushes.White,
-                FontSize = 14,
+                FontSize = 13,
                 FontWeight = FontWeights.SemiBold,
-                Padding = new Thickness(20, 10, 20, 10),
-                Width = 140,
-                Height = 45,
-                Margin = new Thickness(5, 0, 5, 0),
+                Padding = new Thickness(18, 8, 18, 8),
+                Width = 130,
+                Height = 40,
+                Margin = new Thickness(4, 0, 4, 0),
                 Cursor = System.Windows.Input.Cursors.Hand
             };
             btn.Click += click;
@@ -165,14 +166,14 @@ namespace AutoDial
 
         void AddField(Grid grid, string label, int row, out TextBox textBox)
         {
-            var lbl = new TextBlock { Text = label, FontSize = 13, Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 8) };
+            var lbl = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 8) };
             Grid.SetRow(lbl, row);
             grid.Children.Add(lbl);
 
             textBox = new TextBox
             {
-                FontSize = 14,
-                Padding = new Thickness(10, 8, 10, 8),
+                FontSize = 13,
+                Padding = new Thickness(8, 6, 8, 6),
                 Background = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF5)),
                 BorderBrush = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0)),
                 BorderThickness = new Thickness(1),
@@ -186,14 +187,14 @@ namespace AutoDial
 
         void AddPasswordField(Grid grid, string label, int row, out PasswordBox textBox)
         {
-            var lbl = new TextBlock { Text = label, FontSize = 13, Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 8) };
+            var lbl = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 8) };
             Grid.SetRow(lbl, row);
             grid.Children.Add(lbl);
 
             textBox = new PasswordBox
             {
-                FontSize = 14,
-                Padding = new Thickness(10, 8, 10, 8),
+                FontSize = 13,
+                Padding = new Thickness(8, 6, 8, 6),
                 Background = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF5)),
                 BorderBrush = new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0)),
                 BorderThickness = new Thickness(1),
