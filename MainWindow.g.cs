@@ -34,8 +34,24 @@ namespace AutoDial
             var scrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
             var mainStack = new StackPanel { Margin = new Thickness(20) };
 
-            // Title
-            mainStack.Children.Add(new TextBlock { Text = "宽带自动拨号", FontSize = 22, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x2E)), Margin = new Thickness(0, 0, 0, 12) });
+            // Title bar with changelog button
+            var titlePanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 12) };
+            titlePanel.Children.Add(new TextBlock { Text = "宽带自动拨号", FontSize = 22, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x2E)), VerticalAlignment = VerticalAlignment.Center });
+            var btnChangelog = new Button
+            {
+                Content = "更新日志 v2.4",
+                FontSize = 11,
+                Padding = new Thickness(8, 4, 8, 4),
+                Margin = new Thickness(10, 0, 0, 0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Background = new SolidColorBrush(Color.FromRgb(0xE8, 0xEA, 0xED)),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66)),
+                BorderThickness = new Thickness(0),
+                ToolTip = "查看软件更新历史"
+            };
+            btnChangelog.Click += BtnChangelog_Click;
+            titlePanel.Children.Add(btnChangelog);
+            mainStack.Children.Add(titlePanel);
 
             // Account List Card
             var card1 = CreateCard();

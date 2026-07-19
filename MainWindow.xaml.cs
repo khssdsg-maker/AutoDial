@@ -592,5 +592,117 @@ namespace AutoDial
             }
             catch { }
         }
+
+        void BtnChangelog_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new Window
+            {
+                Title = "更新日志 - AutoDial",
+                Width = 500,
+                Height = 550,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                Background = new SolidColorBrush(Color.FromRgb(0xF5, 0xF5, 0xF5)),
+                FontFamily = new FontFamily("Microsoft YaHei"),
+                ResizeMode = ResizeMode.NoResize
+            };
+
+            var scrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+            var stack = new StackPanel { Margin = new Thickness(20) };
+
+            var log = @"v2.4 (2025-07-21)
+- 新增更新日志窗口
+- 点击标题栏按钮查看历史版本
+
+v2.3 (2025-07-19)
+- 新增密码显示/隐藏切换按钮
+- 新增鼠标悬停提示
+
+v2.2 (2025-07-19)
+- 新增托盘气泡通知（拨号成功/失败/断开）
+- 新增窗口位置记忆功能
+- 新增自动更新检测（从GitHub检查新版本）
+- 优化：创建系统连接后自动添加到账户列表
+- 优化：删除系统连接时自动删除对应账户
+
+v2.1 (2025-07-19)
+- 修复界面布局问题，添加滚动支持
+- 优化窗口高度和控件间距
+
+v2.0 (2025-07-19)
+- 升级为WPF现代化界面
+- 卡片式布局，圆角阴影效果
+- 自定义颜色按钮
+- 连接状态指示灯
+
+v1.8 (2025-07-19)
+- 异步拨号，解决界面卡顿问题
+- 拨号/重连使用后台线程
+
+v1.7 (2025-07-19)
+- 重写创建连接功能，直接写入电话簿文件
+- 真正在Windows中创建PPPoE连接
+
+v1.6 (2025-07-19)
+- 修复创建连接逻辑
+
+v1.5 (2025-07-19)
+- 修复UI布局和创建连接功能
+
+v1.4 (2025-07-01)
+- 新增创建/删除系统连接功能
+- 新设备无需手动设置Windows
+
+v1.3 (2025-07-01)
+- 新增系统托盘功能
+- 新增错误码中文解释
+- 新增导入/导出配置功能
+
+v1.2 (2025-07-01)
+- 新增断线自动重连功能
+- 新增连接状态实时监控
+
+v1.1 (2025-07-01)
+- 新增多账号管理功能
+- 新增开机自动拨号选项
+- 新增静默拨号选项
+
+v1.0 (2025-06-14)
+- 初始版本发布";
+
+            string[] lines = log.Split('\n');
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
+
+                if (trimmed.StartsWith("v"))
+                {
+                    stack.Children.Add(new TextBlock
+                    {
+                        Text = trimmed,
+                        FontSize = 15,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = new SolidColorBrush(Color.FromRgb(0x21, 0x96, 0xF3)),
+                        Margin = new Thickness(0, 12, 0, 6)
+                    });
+                }
+                else if (trimmed.StartsWith("-"))
+                {
+                    stack.Children.Add(new TextBlock
+                    {
+                        Text = trimmed,
+                        FontSize = 13,
+                        Foreground = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44)),
+                        Margin = new Thickness(8, 2, 0, 2),
+                        TextWrapping = TextWrapping.Wrap
+                    });
+                }
+            }
+
+            scrollViewer.Content = stack;
+            win.Content = scrollViewer;
+            win.ShowDialog();
+        }
     }
 }
