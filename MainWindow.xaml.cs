@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Windows;
@@ -17,9 +18,11 @@ namespace AutoDial
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"AutoDial");
         static string configPath = Path.Combine(appDir, "accounts.txt");
         static string settingsPath = Path.Combine(appDir, "settings.txt");
+        static string windowSettingsPath = Path.Combine(appDir, "window.txt");
         static string phonebookPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             @"Microsoft\Network\Connections\Pbk\rasphone.pbk");
+        static string currentVersion = "2.2";
 
         List<string[]> accounts = new List<string[]>();
         DispatcherTimer statusTimer;
@@ -31,6 +34,7 @@ namespace AutoDial
         public MainWindow()
         {
             InitializeComponent();
+            LoadWindowPosition();
 
             statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
             statusTimer.Tick += StatusTimer_Tick;
@@ -40,6 +44,68 @@ namespace AutoDial
             LoadSettings();
             CheckStatus();
             SetupTray();
+            CheckForUpdate();
+        }
+
+        void LoadWindowPosition()
+        {
+            try
+            {
+                if (File.Exists(windowSettingsPath))
+                {
+                    string[] lines = File.ReadAllLines(windowSettingsPath);
+                    if (lines.Length >= 2)
+                    {
+                        double left = double.Parse(lines[0]);
+                        double top = double.Parse(lines[1]);
+                        if (left >= 0 && top >= 0 && left < SystemParameters.PrimaryScreenWidth && top < SystemParameters.PrimaryScreenHeight)
+                        {
+                            Left = left;
+                            Top = top;
+                            WindowStartupLocation = WindowStartupLocation.Manual;
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        void SaveWindowPosition()
+        {
+            try
+            {
+                if (!Directory.Exists(appDir)) Directory.CreateDirectory(appDir);
+                File.WriteAllLines(windowSettingsPath, new string[] { Left.ToString(), Top.ToString() });
+            }
+            catch { }
+        }
+
+        void CheckForUpdate()
+        {
+            Thread t = new Thread(() =>
+            {
+                try
+                {
+                    using (WebClient wc = new WebClient())
+                    {
+                        string latest = wc.DownloadString("https://raw.githubusercontent.com/khssdsg-maker/AutoDial/main/version.txt");
+                        latest = latest.Trim();
+                        if (latest != currentVersion)
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                if (MessageBox.Show("发现新版本 " + latest + "，是否前往下载？", "更新", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
+                                {
+                                    Process.Start(new ProcessStartInfo { FileName = "https://github.com/khssdsg-maker/AutoDial/releases", UseShellExecute = true });
+                                }
+                            });
+                        }
+                    }
+                }
+                catch { }
+            });
+            t.IsBackground = true;
+            t.Start();
         }
 
         void SetupTray()
@@ -50,7 +116,7 @@ namespace AutoDial
             trayMenu.Items.Add("拨号", null, (s, e) => Dial());
             trayMenu.Items.Add("断开", null, (s, e) => Disconnect());
             trayMenu.Items.Add("-");
-            trayMenu.Items.Add("退出", null, (s, e) => { Application.Current.Shutdown(); });
+            trayMenu.Items.Add("退出", null, (s, e) => { SaveWindowPosition(); Application.Current.Shutdown(); });
 
             trayIcon = new System.Windows.Forms.NotifyIcon
             {
@@ -67,10 +133,18 @@ namespace AutoDial
             trayIcon.Text = "宽带自动拨号 - " + (connected ? "已连接" : "未连接");
         }
 
-        void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        void ShowTrayBalloon(string title, string msg)
         {
-            e.Cancel = true;
-            Hide();
+            trayIcon.ShowBalloonTip(3000, title, msg, System.Windows.Forms.ToolTipIcon.Info);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            SaveWindowPosition();
+            trayIcon.Visible = false;
+            trayIcon.Dispose();
+            base.OnClosed(e);
+            Application.Current.Shutdown();
         }
 
         void StatusTimer_Tick(object sender, EventArgs e)
@@ -105,7 +179,7 @@ namespace AutoDial
                     {
                         connectTime = DateTime.Now;
                         if (WindowState == WindowState.Minimized)
-                            trayIcon.ShowBalloonTip(3000, "连接成功", "宽带已连接", System.Windows.Forms.ToolTipIcon.Info);
+                            ShowTrayBalloon("连接成功", "宽带已连接");
                     }
                 }
                 else
@@ -159,7 +233,7 @@ namespace AutoDial
                         lblStatus.Text = "已连接 - " + name;
                         lblStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4, 0xC, 0xAF));
                         statusDot.Fill = new SolidColorBrush(Color.FromRgb(0x4, 0xC, 0xAF));
-                        trayIcon.ShowBalloonTip(3000, "重连成功", "宽带已自动重新连接", System.Windows.Forms.ToolTipIcon.Info);
+                        ShowTrayBalloon("重连成功", "宽带已自动重新连接");
                     }
                     else
                     {
@@ -301,7 +375,7 @@ namespace AutoDial
             string name = txtName.Text;
             if (File.Exists(phonebookPath) && File.ReadAllText(phonebookPath).Contains("[" + name + "]"))
             {
-                MessageBox.Show("连接 \"" + name + "\" 已存在");
+                MessageBox.Show("系统连接 \"" + name + "\" 已存在");
                 return;
             }
 
@@ -340,7 +414,19 @@ namespace AutoDial
                     "LastSelectedPhone=0\nPromoteAlternates=0\nTryNextAlternateOnFail=1\n";
 
                 File.AppendAllText(phonebookPath, entry);
-                MessageBox.Show("系统连接创建成功！");
+
+                // Auto-add account to list
+                bool exists = false;
+                foreach (string[] a in accounts) if (a[0] == name) { exists = true; break; }
+                if (!exists)
+                {
+                    accounts.Add(new string[] { name, txtUser.Text, txtPass.Password });
+                    SaveAccounts();
+                    LoadAccounts();
+                    lstAccounts.SelectedIndex = lstAccounts.Items.Count - 1;
+                }
+
+                MessageBox.Show("系统连接创建成功！\n已自动添加到账户列表。", "成功");
             }
             catch (Exception ex)
             {
@@ -354,19 +440,33 @@ namespace AutoDial
             string name = txtName.Text;
 
             if (!File.Exists(phonebookPath) || !File.ReadAllText(phonebookPath).Contains("[" + name + "]"))
-            { MessageBox.Show("连接不存在"); return; }
+            { MessageBox.Show("系统连接不存在"); return; }
 
-            if (MessageBox.Show("确定删除系统连接 \"" + name + "\" ?", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show("确定删除系统连接 \"" + name + "\" 吗？\n\n对应的账户也会被删除。", "确认", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 try
                 {
+                    // Delete system connection
                     string content = File.ReadAllText(phonebookPath);
                     int start = content.IndexOf("[" + name + "]");
                     int end = content.IndexOf("\n[", start + 1);
                     if (end < 0) end = content.Length;
                     content = content.Remove(start, end - start);
                     File.WriteAllText(phonebookPath, content);
-                    MessageBox.Show("已删除");
+
+                    // Auto-delete account from list
+                    for (int i = accounts.Count - 1; i >= 0; i--)
+                    {
+                        if (accounts[i][0] == name)
+                        {
+                            accounts.RemoveAt(i);
+                            break;
+                        }
+                    }
+                    SaveAccounts();
+                    LoadAccounts();
+
+                    MessageBox.Show("已删除系统连接和对应账户", "成功");
                 }
                 catch (Exception ex) { MessageBox.Show("删除失败: " + ex.Message); }
             }
@@ -417,10 +517,7 @@ namespace AutoDial
             lblStatus.Text = "已保存";
         }
 
-        void BtnDial_Click(object sender, RoutedEventArgs e)
-        {
-            Dial();
-        }
+        void BtnDial_Click(object sender, RoutedEventArgs e) { Dial(); }
 
         void Dial()
         {
@@ -456,12 +553,13 @@ namespace AutoDial
                         lblStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4, 0xC, 0xAF));
                         statusDot.Fill = new SolidColorBrush(Color.FromRgb(0x4, 0xC, 0xAF));
                         UpdateTrayIcon(true);
-                        trayIcon.ShowBalloonTip(3000, "连接成功", "宽带已连接", System.Windows.Forms.ToolTipIcon.Info);
+                        ShowTrayBalloon("连接成功", name + " 已连接");
                     }
                     else
                     {
                         lblStatus.Text = "失败 - " + GetErrorDesc(exitCode);
                         lblStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36));
+                        ShowTrayBalloon("连接失败", GetErrorDesc(exitCode));
                     }
                     btnDial.IsEnabled = true;
                     btnDisconnect.IsEnabled = true;
@@ -472,10 +570,7 @@ namespace AutoDial
             t.Start();
         }
 
-        void BtnDisconnect_Click(object sender, RoutedEventArgs e)
-        {
-            Disconnect();
-        }
+        void BtnDisconnect_Click(object sender, RoutedEventArgs e) { Disconnect(); }
 
         void Disconnect()
         {
@@ -487,16 +582,9 @@ namespace AutoDial
                 lblStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99));
                 statusDot.Fill = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99));
                 UpdateTrayIcon(false);
+                ShowTrayBalloon("已断开", "宽带连接已断开");
             }
             catch { }
-        }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            trayIcon.Visible = false;
-            trayIcon.Dispose();
-            base.OnClosed(e);
-            Application.Current.Shutdown();
         }
     }
 }
