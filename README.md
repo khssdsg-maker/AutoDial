@@ -4,6 +4,19 @@
   <img src="AutoDial.ico" width="128" height="128">
 </p>
 
+<p align="center">
+  <a href="https://khssdsg-maker.github.io/AutoDial/">官方网站</a> |
+  <a href="https://github.com/khssdsg-maker/AutoDial/releases">下载</a> |
+  <a href="#安装方法">安装方法</a> |
+  <a href="#更新日志">更新日志</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-2.5-blue" alt="Version">
+  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-brightgreen" alt="Platform">
+  <img src="https://img.shields.io/badge/license-MIT-orange" alt="License">
+</p>
+
 现代化 WPF 界面的 Windows 宽带自动拨号工具，支持多账号管理、开机自动拨号、静默拨号、断线自动重连等功能。
 
 ## 功能特性
@@ -35,40 +48,39 @@
 
 ## 安装方法
 
-### 方法一：绿色版（推荐）
+### 方法一：PowerShell一键安装（推荐）
 
-1. 下载 `AutoDial.exe` 和 `AutoDial.ico`（两个文件放在同一目录）
-2. 双击 `AutoDial.exe` 运行
-3. 无需安装，直接使用
+以管理员身份运行 PowerShell，执行：
 
-### 方法二：创建桌面快捷方式
+```powershell
+irm https://raw.githubusercontent.com/khssdsg-maker/AutoDial/main/install.ps1 | iex
+```
 
-1. 下载 `AutoDial.exe` 和 `AutoDial.ico`
-2. 将文件放到固定位置（如 `C:\Program Files\AutoDial\`）
-3. 右键 `AutoDial.exe` → 发送到 → 桌面快捷方式
-4. 右键桌面快捷方式 → 属性 → 更改图标 → 选择 `AutoDial.ico`
+### 方法二：CMD一键安装
 
-### 方法三：开机自启动
+以管理员身份运行 CMD，执行：
+
+```cmd
+curl -o %TEMP%\install.bat https://raw.githubusercontent.com/khssdsg-maker/AutoDial/main/install.bat && %TEMP%\install.bat
+```
+
+### 方法三：Winget安装（Windows 11）
+
+```powershell
+winget install khssdsg-maker.AutoDial
+```
+
+### 方法四：手动下载安装
+
+1. 下载 [AutoDial.exe](https://github.com/khssdsg-maker/AutoDial/releases/download/v2.5/AutoDial.exe) 和 [AutoDial.ico](https://github.com/khssdsg-maker/AutoDial/releases/download/v2.5/AutoDial.ico)
+2. 将两个文件放在同一目录
+3. 双击 `AutoDial.exe` 运行
+
+### 方法五：开机自启动
 
 1. 运行软件
 2. 勾选「开机自动拨号」
 3. 点击「保存设置」
-4. 软件会自动添加到 Windows 启动项
-
-### 方法四：手动添加到启动项
-
-1. 按 `Win + R`，输入 `shell:startup`，回车
-2. 将 `AutoDial.exe` 和 `AutoDial.ico` 复制到打开的文件夹
-3. 每次开机登录后会自动运行
-
-### 方法五：计划任务（高级）
-
-1. 按 `Win + R`，输入 `taskschd.msc`，回车
-2. 点击「创建基本任务」
-3. 名称：`AutoDial`，描述：`宽带自动拨号`
-4. 触发器：「当用户登录时」
-5. 操作：「启动程序」→ 选择 `AutoDial.exe`
-6. 完成
 
 ## 使用方法
 
@@ -117,26 +129,29 @@ C:\WINDOWS\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:Auto
 - `AutoDial.exe` - 主程序
 - `AutoDial.ico` - 软件图标
 
+### 安装脚本
+- `install.ps1` - PowerShell一键安装脚本
+- `install.bat` - CMD一键安装脚本
+
+### 网站文件
+- `index.html` - 官方网站页面
+
 ### 源代码文件
 - `App.xaml.cs` - 应用程序入口
 - `MainWindow.xaml.cs` - 主窗口逻辑
 - `MainWindow.g.cs` - 主窗口界面定义
-- `MainWindow.xaml` - XAML界面定义（备用）
 
 ### 配置文件（运行时生成）
 - `%APPDATA%\AutoDial\accounts.txt` - 账号配置
 - `%APPDATA%\AutoDial\settings.txt` - 设置文件
 - `%APPDATA%\AutoDial\window.txt` - 窗口位置记录
 
-### 启动项（开启自启动后生成）
-- `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\AutoDial.exe`
-- `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\AutoDial.ico`
-
 ## 更新日志
 
 ### v2.5 (2025-07-19)
 - 添加软件图标（紫蓝渐变设计）
 - 标题栏显示更新日志按钮
+- 添加官方网站和一键安装脚本
 
 ### v2.4 (2025-07-19)
 - 新增更新日志窗口
